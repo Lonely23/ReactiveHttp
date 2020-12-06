@@ -1,6 +1,5 @@
 package github.leavesc.reactivehttp.base
 
-import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Context
 import android.widget.Toast
@@ -16,8 +15,7 @@ import kotlinx.coroutines.CoroutineScope
  * @Desc: Activity 基类
  * @GitHub：https://github.com/leavesC
  */
-@SuppressLint("Registered")
-abstract class BaseReactiveActivity : AppCompatActivity(), IUIActionEventObserver {
+open class BaseReactiveActivity : AppCompatActivity(), IUIActionEventObserver {
 
     override val lifecycleSupportedScope: CoroutineScope
         get() = lifecycleScope

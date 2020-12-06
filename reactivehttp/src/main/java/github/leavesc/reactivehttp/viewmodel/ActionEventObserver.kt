@@ -37,19 +37,19 @@ interface IViewModelActionEvent : IUIActionEvent {
     val finishViewEventLD: MutableLiveData<FinishViewEvent>
 
     override fun showLoading(msg: String) {
-        showLoadingLD.postValue(ShowLoadingEvent(msg))
+        showLoadingLD.value = ShowLoadingEvent(msg)
     }
 
     override fun dismissLoading() {
-        dismissLoadingLD.postValue(DismissLoadingEvent)
+        dismissLoadingLD.value = DismissLoadingEvent
     }
 
     override fun showToast(msg: String) {
-        showToastEventLD.postValue(ShowToastEvent(msg))
+        showToastEventLD.value = ShowToastEvent(msg)
     }
 
     override fun finishView() {
-        finishViewEventLD.postValue(FinishViewEvent)
+        finishViewEventLD.value = FinishViewEvent
     }
 
 }

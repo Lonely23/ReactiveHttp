@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * @Desc:
  * @GitHub：https://github.com/leavesC
  */
-open class SelfRemoteDataSource(iActionEvent: IUIActionEvent?) : RemoteExtendDataSource<ApiService>(iActionEvent, ApiService::class.java) {
+class SelfRemoteDataSource(iActionEvent: IUIActionEvent?) : RemoteExtendDataSource<ApiService>(iActionEvent, ApiService::class.java) {
 
     companion object {
 
