@@ -8,6 +8,7 @@ import github.leavesc.reactivehttp.exception.LocalBadException
 import github.leavesc.reactivehttp.viewmodel.IUIActionEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -22,32 +23,25 @@ import java.util.concurrent.TimeUnit
  * @Desc:
  * @GitHub：https://github.com/leavesC
  */
-abstract class BaseRemoteDataSource<Api : Any>(protected val iUiActionEvent: IUIActionEvent?, protected val serviceApiClass: Class<Api>) : ICoroutineEvent {
+abstract class BaseRemoteDataSource<Api : Any>(protected val iUiActionEvent: IUIActionEvent?, protected val apiServiceClass: Class<Api>) : ICoroutineEvent {
 
     companion object {
 
         /**
          * ApiService 缓存
          */
-        private val serviceApiCache = LruCache<String, Any>(20)
+        private val apiServiceCache = LruCache<String, Any>(30)
 
         /**
          * Retrofit 缓存
          */
-        private val retrofitCache = LruCache<String, Retrofit>(2)
+        private val retrofitCache = LruCache<String, Retrofit>(3)
 
         /**
          * 默认的 OKHttpClient
          */
         private val defaultOkHttpClient by lazy {
-            createDefaultOkHttpClient()
-        }
-
-        /**
-         * 构建默认的 OKHttpClient
-         */
-        private fun createDefaultOkHttpClient(): OkHttpClient {
-            return OkHttpClient.Builder()
+            OkHttpClient.Builder()
                     .readTimeout(10000L, TimeUnit.MILLISECONDS)
                     .writeTimeout(10000L, TimeUnit.MILLISECONDS)
                     .connectTimeout(10000L, TimeUnit.MILLISECONDS)
@@ -73,9 +67,9 @@ abstract class BaseRemoteDataSource<Api : Any>(protected val iUiActionEvent: IUI
     override val lifecycleSupportedScope = iUiActionEvent?.lifecycleSupportedScope ?: GlobalScope
 
     /**
-     * 由子类实现此字段以便获取 release 环境下的接口 BaseUrl
+     * 由子类实现此字段以便获取 baseUrl
      */
-    protected abstract val releaseUrl: String
+    protected abstract val baseUrl: String
 
     /**
      * 允许子类自己来实现创建 Retrofit 的逻辑
@@ -91,24 +85,26 @@ abstract class BaseRemoteDataSource<Api : Any>(protected val iUiActionEvent: IUI
         if (baseUrl.isNotBlank()) {
             return baseUrl
         }
-        return releaseUrl
+        return this.baseUrl
     }
 
-    fun getService(baseUrl: String = ""): Api {
-        return getService(generateBaseUrl(baseUrl), serviceApiClass)
+    fun getApiService(baseUrl: String = ""): Api {
+        return getApiService(generateBaseUrl(baseUrl), apiServiceClass)
     }
 
-    private fun getService(baseUrl: String, clazz: Class<Api>): Api {
-        val key = baseUrl + clazz.canonicalName
-        val get = serviceApiCache.get(key)
+    private fun getApiService(baseUrl: String, apiServiceClazz: Class<Api>): Api {
+        val key = baseUrl + apiServiceClazz.canonicalName
+        val get = apiServiceCache.get(key)?.let {
+            it as? Api
+        }
         if (get != null) {
-            return get as Api
+            return get
         }
         val retrofit = retrofitCache.get(baseUrl) ?: (createRetrofit(baseUrl).apply {
             retrofitCache.put(baseUrl, this)
         })
-        val apiService = retrofit.create(clazz)
-        serviceApiCache.put(key, apiService)
+        val apiService = retrofit.create(apiServiceClazz)
+        apiServiceCache.put(key, apiService)
         return apiService
     }
 
@@ -186,8 +182,8 @@ abstract class BaseRemoteDataSource<Api : Any>(protected val iUiActionEvent: IUI
         }
     }
 
-    protected fun showLoading() {
-        iUiActionEvent?.showLoading()
+    protected fun showLoading(job: Job?) {
+        iUiActionEvent?.showLoading(job)
     }
 
     protected fun dismissLoading() {

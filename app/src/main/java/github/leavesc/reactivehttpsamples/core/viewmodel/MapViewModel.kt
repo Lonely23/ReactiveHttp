@@ -1,8 +1,9 @@
 package github.leavesc.reactivehttpsamples.core.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import github.leavesc.reactivehttpsamples.core.bean.DistrictBean
 import github.leavesc.reactivehttpsamples.base.BaseViewModel
+import github.leavesc.reactivehttpsamples.core.bean.DistrictBean
 import kotlinx.coroutines.delay
 
 /**
@@ -40,22 +41,29 @@ class MapViewModel : BaseViewModel() {
     fun getProvince() {
         remoteDataSource.enqueueLoading({
             //主动延迟一段时间，避免弹窗太快消失
-            delay(1000)
+            delay(2000)
             getProvince()
         }) {
             onStart {
-
+                log("onStart")
             }
             onSuccess {
+                log("onSuccess")
                 stateLiveData.value = TYPE_PROVINCE
                 provinceLiveData.value = it[0].districts
                 realLiveData.value = it[0].districts
             }
+            onSuccessIO {
+                log("onSuccessIO")
+            }
             onFailed {
-
+                log("onFailed")
             }
             onCancelled {
-
+                log("onCancelled")
+            }
+            onFinally {
+                log("onFinally")
             }
         }
     }
@@ -121,6 +129,15 @@ class MapViewModel : BaseViewModel() {
                 adCodeSelectedLiveData.value = realLiveData.value?.get(position)?.adcode
             }
         }
+    }
+
+    private var log = ""
+
+    @Synchronized
+    private fun log(msg: String) {
+        val newLog = "[${Thread.currentThread().name}]-${msg}"
+        log = log + "\n" + newLog
+        Log.e("TAG", newLog)
     }
 
 }

@@ -2,8 +2,8 @@ package github.leavesc.reactivehttpsamples.core.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import github.leavesc.reactivehttpsamples.core.bean.HttpWrapBean
 import github.leavesc.reactivehttpsamples.base.BaseViewModel
+import github.leavesc.reactivehttpsamples.core.bean.HttpWrapBean
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 

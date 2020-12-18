@@ -3,6 +3,7 @@ package github.leavesc.reactivehttp.viewmodel
 import android.content.Context
 import androidx.lifecycle.*
 import github.leavesc.reactivehttp.coroutine.ICoroutineEvent
+import kotlinx.coroutines.Job
 
 /**
  * @Author: leavesC
@@ -12,11 +13,7 @@ import github.leavesc.reactivehttp.coroutine.ICoroutineEvent
  */
 interface IUIActionEvent : ICoroutineEvent {
 
-    fun showLoading(msg: String)
-
-    fun showLoading() {
-        showLoading("")
-    }
+    fun showLoading(job: Job?)
 
     fun dismissLoading()
 
@@ -28,20 +25,20 @@ interface IUIActionEvent : ICoroutineEvent {
 
 interface IViewModelActionEvent : IUIActionEvent {
 
-    val showLoadingLD: MutableLiveData<ShowLoadingEvent>
+    val showLoadingEventLD: MutableLiveData<ShowLoadingEvent>
 
-    val dismissLoadingLD: MutableLiveData<DismissLoadingEvent>
+    val dismissLoadingEventLD: MutableLiveData<DismissLoadingEvent>
 
     val showToastEventLD: MutableLiveData<ShowToastEvent>
 
     val finishViewEventLD: MutableLiveData<FinishViewEvent>
 
-    override fun showLoading(msg: String) {
-        showLoadingLD.value = ShowLoadingEvent(msg)
+    override fun showLoading(job: Job?) {
+        showLoadingEventLD.value = ShowLoadingEvent(job)
     }
 
     override fun dismissLoading() {
-        dismissLoadingLD.value = DismissLoadingEvent
+        dismissLoadingEventLD.value = DismissLoadingEvent
     }
 
     override fun showToast(msg: String) {
@@ -89,10 +86,10 @@ interface IUIActionEventObserver : IUIActionEvent {
     }
 
     fun <VM> generateActionEvent(viewModel: VM) where VM : ViewModel, VM : IViewModelActionEvent {
-        viewModel.showLoadingLD.observe(lLifecycleOwner, Observer {
-            this@IUIActionEventObserver.showLoading(it.message)
+        viewModel.showLoadingEventLD.observe(lLifecycleOwner, Observer {
+            this@IUIActionEventObserver.showLoading(it.job)
         })
-        viewModel.dismissLoadingLD.observe(lLifecycleOwner, Observer {
+        viewModel.dismissLoadingEventLD.observe(lLifecycleOwner, Observer {
             this@IUIActionEventObserver.dismissLoading()
         })
         viewModel.showToastEventLD.observe(lLifecycleOwner, Observer {

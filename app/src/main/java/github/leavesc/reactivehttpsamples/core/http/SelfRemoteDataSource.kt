@@ -38,9 +38,9 @@ class SelfRemoteDataSource(iActionEvent: IUIActionEvent?) : RemoteExtendDataSour
     }
 
     /**
-     * 由子类实现此字段以便获取 release 环境下的接口 BaseUrl
+     * 由子类实现此字段以便获取 baseUrl
      */
-    override val releaseUrl: String
+    override val baseUrl: String
         get() = HttpConfig.BASE_URL_MAP
 
     /**

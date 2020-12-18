@@ -18,7 +18,7 @@ import kotlinx.coroutines.awaitAll
  * 当包含的某个接口请求失败时，则会直接回调 onFail 方法
  * @GitHub：https://github.com/leavesC
  */
-abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, serviceApiClass: Class<Api>) : RemoteDataSource<Api>(iActionEvent, serviceApiClass) {
+abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, apiServiceClass: Class<Api>) : RemoteDataSource<Api>(iActionEvent, apiServiceClass) {
 
     fun <DataA, DataB> enqueueLoading(apiFunA: suspend Api.() -> IHttpWrapBean<DataA>,
                                       apiFunB: suspend Api.() -> IHttpWrapBean<DataB>,
@@ -36,14 +36,14 @@ abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, 
             }
             try {
                 if (showLoading) {
-                    showLoading()
+                    showLoading(coroutineContext[Job])
                 }
                 callback?.onStart?.invoke()
-                val responseList: List<IHttpWrapBean<out Any?>>?
+                val responseList: List<IHttpWrapBean<out Any?>>
                 try {
                     responseList = listOf(
-                            async { apiFunA.invoke(getService()) },
-                            async { apiFunB.invoke(getService()) }
+                            async { apiFunA.invoke(getApiService()) },
+                            async { apiFunB.invoke(getApiService()) }
                     ).awaitAll()
                     val failed = responseList.find { it.httpIsFailed }
                     if (failed != null) {
@@ -66,14 +66,19 @@ abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, 
         }
     }
 
-    private suspend fun <DataA, DataB> onGetResponse(callback: RequestPairCallback<DataA, DataB>?, responseList: List<IHttpWrapBean<out Any?>>) {
-        withNonCancellable {
-            callback?.apply {
-                withMain {
-                    onSuccess?.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB)
+    private suspend fun <DataA, DataB> onGetResponse(callback: RequestPairCallback<DataA, DataB>?,
+                                                     responseList: List<IHttpWrapBean<out Any?>>) {
+        callback?.let {
+            withNonCancellable {
+                callback.onSuccess?.let {
+                    withMain {
+                        it.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB)
+                    }
                 }
-                withIO {
-                    onSuccessIO?.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB)
+                callback.onSuccessIO?.let {
+                    withIO {
+                        it.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB)
+                    }
                 }
             }
         }
@@ -99,14 +104,14 @@ abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, 
             }
             try {
                 if (showLoading) {
-                    showLoading()
+                    showLoading(coroutineContext[Job])
                 }
-                val responseList: List<IHttpWrapBean<out Any?>>?
+                val responseList: List<IHttpWrapBean<out Any?>>
                 try {
                     responseList = listOf(
-                            async { apiFunA.invoke(getService(baseUrl)) },
-                            async { apiFunB.invoke(getService(baseUrl)) },
-                            async { apiFunC.invoke(getService(baseUrl)) }
+                            async { apiFunA.invoke(getApiService(baseUrl)) },
+                            async { apiFunB.invoke(getApiService(baseUrl)) },
+                            async { apiFunC.invoke(getApiService(baseUrl)) }
                     ).awaitAll()
                     val failed = responseList.find { it.httpIsFailed }
                     if (failed != null) {
@@ -129,14 +134,19 @@ abstract class RemoteExtendDataSource<Api : Any>(iActionEvent: IUIActionEvent?, 
         }
     }
 
-    private suspend fun <DataA, DataB, DataC> onGetResponse(callback: RequestTripleCallback<DataA, DataB, DataC>?, responseList: List<IHttpWrapBean<out Any?>>) {
-        withNonCancellable {
-            callback?.apply {
-                withMain {
-                    onSuccess?.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB, responseList[2].httpData as DataC)
+    private suspend fun <DataA, DataB, DataC> onGetResponse(callback: RequestTripleCallback<DataA, DataB, DataC>?,
+                                                            responseList: List<IHttpWrapBean<out Any?>>) {
+        callback?.let {
+            withNonCancellable {
+                callback.onSuccess?.let {
+                    withMain {
+                        it.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB, responseList[2].httpData as DataC)
+                    }
                 }
-                withIO {
-                    onSuccessIO?.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB, responseList[2].httpData as DataC)
+                callback.onSuccessIO?.let {
+                    withIO {
+                        it.invoke(responseList[0].httpData as DataA, responseList[1].httpData as DataB, responseList[2].httpData as DataC)
+                    }
                 }
             }
         }

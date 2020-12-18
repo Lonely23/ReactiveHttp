@@ -1,5 +1,7 @@
 package github.leavesc.reactivehttp.viewmodel
 
+import kotlinx.coroutines.Job
+
 /**
  * @Author: leavesC
  * @Date: 2020/6/26 21:19
@@ -8,7 +10,7 @@ package github.leavesc.reactivehttp.viewmodel
  */
 open class BaseActionEvent
 
-class ShowLoadingEvent(val message: String) : BaseActionEvent()
+class ShowLoadingEvent(val job: Job?) : BaseActionEvent()
 
 object DismissLoadingEvent : BaseActionEvent()
 

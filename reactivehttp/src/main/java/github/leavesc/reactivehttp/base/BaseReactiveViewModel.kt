@@ -19,9 +19,9 @@ open class BaseReactiveViewModel : ViewModel(), IViewModelActionEvent {
     override val lifecycleSupportedScope: CoroutineScope
         get() = viewModelScope
 
-    override val showLoadingLD = MutableLiveData<ShowLoadingEvent>()
+    override val showLoadingEventLD = MutableLiveData<ShowLoadingEvent>()
 
-    override val dismissLoadingLD = MutableLiveData<DismissLoadingEvent>()
+    override val dismissLoadingEventLD = MutableLiveData<DismissLoadingEvent>()
 
     override val showToastEventLD = MutableLiveData<ShowToastEvent>()
 
@@ -34,9 +34,9 @@ open class BaseReactiveAndroidViewModel(application: Application) : AndroidViewM
     override val lifecycleSupportedScope: CoroutineScope
         get() = viewModelScope
 
-    override val showLoadingLD = MutableLiveData<ShowLoadingEvent>()
+    override val showLoadingEventLD = MutableLiveData<ShowLoadingEvent>()
 
-    override val dismissLoadingLD = MutableLiveData<DismissLoadingEvent>()
+    override val dismissLoadingEventLD = MutableLiveData<DismissLoadingEvent>()
 
     override val showToastEventLD = MutableLiveData<ShowToastEvent>()
 

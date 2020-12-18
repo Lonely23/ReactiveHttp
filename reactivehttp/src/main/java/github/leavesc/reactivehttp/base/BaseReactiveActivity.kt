@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import github.leavesc.reactivehttp.viewmodel.IUIActionEventObserver
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 
 /**
  * @Author: leavesC
@@ -28,26 +29,22 @@ open class BaseReactiveActivity : AppCompatActivity(), IUIActionEventObserver {
 
     private var loadDialog: ProgressDialog? = null
 
-    override fun showLoading(msg: String) {
-        if (loadDialog == null) {
-            loadDialog = ProgressDialog(lContext).apply {
-                setCancelable(false)
-                setCanceledOnTouchOutside(false)
-            }
-        }
-        loadDialog?.let {
-            if (!it.isShowing) {
-                it.show()
-            }
+    override fun showLoading(job: Job?) {
+        dismissLoading()
+        loadDialog = ProgressDialog(lContext).apply {
+            setCancelable(true)
+            setCanceledOnTouchOutside(false)
+            //用于实现当弹窗销毁的时候同时取消网络请求
+//            setOnDismissListener {
+//                job?.cancel()
+//            }
+            show()
         }
     }
 
     override fun dismissLoading() {
-        loadDialog?.let {
-            if (it.isShowing) {
-                it.dismiss()
-            }
-        }
+        loadDialog?.takeIf { it.isShowing }?.dismiss()
+        loadDialog = null
     }
 
     override fun showToast(msg: String) {

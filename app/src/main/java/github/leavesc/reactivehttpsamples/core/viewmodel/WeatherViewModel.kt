@@ -1,8 +1,8 @@
 package github.leavesc.reactivehttpsamples.core.viewmodel
 
 import androidx.lifecycle.MutableLiveData
-import github.leavesc.reactivehttpsamples.core.bean.ForecastsBean
 import github.leavesc.reactivehttpsamples.base.BaseViewModel
+import github.leavesc.reactivehttpsamples.core.bean.ForecastsBean
 
 /**
  * @Author: leavesC

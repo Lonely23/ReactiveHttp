@@ -14,25 +14,30 @@ import kotlinx.coroutines.runBlocking
  * @Desc:
  * @GitHub：https://github.com/leavesC
  */
-abstract class RemoteDataSource<Api : Any>(iUiActionEvent: IUIActionEvent?, serviceApiClass: Class<Api>) : BaseRemoteDataSource<Api>(iUiActionEvent, serviceApiClass) {
+abstract class RemoteDataSource<Api : Any>(iUiActionEvent: IUIActionEvent?, apiServiceClass: Class<Api>) : BaseRemoteDataSource<Api>(iUiActionEvent, apiServiceClass) {
 
-    fun <Data> enqueueLoading(apiFun: suspend Api.() -> IHttpWrapBean<Data>, baseUrl: String = "", callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
+    fun <Data> enqueueLoading(apiFun: suspend Api.() -> IHttpWrapBean<Data>,
+                              baseUrl: String = "",
+                              callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
         return enqueue(apiFun = apiFun, showLoading = true, baseUrl = baseUrl, callbackFun = callbackFun)
     }
 
-    fun <Data> enqueue(apiFun: suspend Api.() -> IHttpWrapBean<Data>, showLoading: Boolean = false, baseUrl: String = "", callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
+    fun <Data> enqueue(apiFun: suspend Api.() -> IHttpWrapBean<Data>,
+                       showLoading: Boolean = false,
+                       baseUrl: String = "",
+                       callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
         return launchMain {
             val callback = if (callbackFun == null) null else RequestCallback<Data>().apply {
                 callbackFun.invoke(this)
             }
             try {
                 if (showLoading) {
-                    showLoading()
+                    showLoading(coroutineContext[Job])
                 }
                 callback?.onStart?.invoke()
                 val response: IHttpWrapBean<Data>
                 try {
-                    response = apiFun.invoke(getService(baseUrl))
+                    response = apiFun.invoke(getApiService(baseUrl))
                     if (!response.httpIsSuccess) {
                         throw ServerCodeBadException(response)
                     }
@@ -53,23 +58,28 @@ abstract class RemoteDataSource<Api : Any>(iUiActionEvent: IUIActionEvent?, serv
         }
     }
 
-    fun <Data> enqueueOriginLoading(apiFun: suspend Api.() -> Data, baseUrl: String = "", callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
+    fun <Data> enqueueOriginLoading(apiFun: suspend Api.() -> Data,
+                                    baseUrl: String = "",
+                                    callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
         return enqueueOrigin(apiFun = apiFun, showLoading = true, baseUrl = baseUrl, callbackFun = callbackFun)
     }
 
-    fun <Data> enqueueOrigin(apiFun: suspend Api.() -> Data, showLoading: Boolean = false, baseUrl: String = "", callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
+    fun <Data> enqueueOrigin(apiFun: suspend Api.() -> Data,
+                             showLoading: Boolean = false,
+                             baseUrl: String = "",
+                             callbackFun: (RequestCallback<Data>.() -> Unit)? = null): Job {
         return launchMain {
             val callback = if (callbackFun == null) null else RequestCallback<Data>().apply {
                 callbackFun.invoke(this)
             }
             try {
                 if (showLoading) {
-                    showLoading()
+                    showLoading(coroutineContext[Job])
                 }
                 callback?.onStart?.invoke()
                 val response: Data
                 try {
-                    response = apiFun.invoke(getService(baseUrl))
+                    response = apiFun.invoke(getApiService(baseUrl))
                 } catch (throwable: Throwable) {
                     handleException(throwable, callback)
                     return@launchMain
@@ -88,13 +98,17 @@ abstract class RemoteDataSource<Api : Any>(iUiActionEvent: IUIActionEvent?, serv
     }
 
     private suspend fun <Data> onGetResponse(callback: RequestCallback<Data>?, httpData: Data) {
-        withNonCancellable {
-            callback?.apply {
-                withMain {
-                    onSuccess?.invoke(httpData)
+        callback?.let {
+            withNonCancellable {
+                callback.onSuccess?.let {
+                    withMain {
+                        it.invoke(httpData)
+                    }
                 }
-                withIO {
-                    onSuccessIO?.invoke(httpData)
+                callback.onSuccessIO?.let {
+                    withIO {
+                        it.invoke(httpData)
+                    }
                 }
             }
         }
@@ -109,7 +123,7 @@ abstract class RemoteDataSource<Api : Any>(iUiActionEvent: IUIActionEvent?, serv
         return runBlocking {
             try {
                 val asyncIO = asyncIO {
-                    apiFun.invoke(getService(baseUrl))
+                    apiFun.invoke(getApiService(baseUrl))
                 }
                 val response = asyncIO.await()
                 if (response.httpIsSuccess) {
